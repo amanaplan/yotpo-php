@@ -16,9 +16,7 @@ class Yotpo
 
     const VERSION = '0.0.3';
 
-    protected static $app_key;
-    protected static $secret;
-    protected static $base_uri = 'https://api.yotpo.com';
+    protected static $app_key, $secret, $base_uri = 'https://api.yotpo.com';
 
     public function __construct($app_key = null, $secret = null, $base_uri = null)
     {
@@ -31,10 +29,10 @@ class Yotpo
         }
 
         $template = Request::init()
-                ->withoutStrictSsl()        // Ease up on some of the SSL checks
-                ->expectsJson()             // Expect JSON responses
-                ->sendsType(Mime::JSON)
-                ->addHeader('yotpo_api_connector', 'PHP-' . Yotpo::VERSION);
+            ->withoutStrictSsl()// Ease up on some of the SSL checks
+            ->expectsJson()// Expect JSON responses
+            ->sendsType(Mime::JSON)
+            ->addHeader('yotpo_api_connector', 'PHP-' . Yotpo::VERSION);
 
         // Set it as a template
         Request::ini($template);
@@ -44,7 +42,7 @@ class Yotpo
     {
         if (!is_null($params)) {
             $params = self::clean_array($params);
-            return self::process_response(Request::get(self::$base_uri . $uri .'?'. http_build_query($params))->send());
+            return self::process_response(Request::get(self::$base_uri . $uri . '?' . http_build_query($params))->send());
         }
         return self::process_response(Request::get(self::$base_uri . $uri)->send());
     }
@@ -65,7 +63,7 @@ class Yotpo
     {
         if (!is_null($params)) {
             $params = self::clean_array($params);
-            return self::process_response(Request::delete(self::$base_uri . $uri .'?'. http_build_query($params))->send());
+            return self::process_response(Request::delete(self::$base_uri . $uri . '?' . http_build_query($params))->send());
         }
         return self::process_response(Request::delete(self::$base_uri . $uri)->send());
     }
@@ -114,7 +112,12 @@ class Yotpo
 
     public function create_account_platform(array $account_platform_hash)
     {
-        $account_platform = self::build_request(array('shop_token' => 'shop_token', 'shop_domain' => 'shop_domain', 'plan_name' => 'plan_name', 'platform_type_id' => 'platform_type_id'), $account_platform_hash);
+        $account_platform = self::build_request(array(
+            'shop_token' => 'shop_token',
+            'shop_domain' => 'shop_domain',
+            'plan_name' => 'plan_name',
+            'platform_type_id' => 'platform_type_id'
+        ), $account_platform_hash);
         $account_platform['deleted'] = false;
         $request = array('utoken' => $account_platform_hash['utoken'], 'account_platform' => $account_platform);
         $app_key = $this->get_app_key($account_platform_hash);
@@ -150,15 +153,13 @@ class Yotpo
         $request = array(
             'account' => self::build_request(
                 array(
-                'minisite_website_name' => 'minisite_website_name',
-                'minisite_website' => 'minisite_website',
-                'minisite_subdomain' => 'minisite_subdomain',
-                'minisite_cname' => 'minisite_cname',
-                'minisite_subdomain_active' => 'minisite_subdomain_active'
-                ),
-                $account_hash
-            ),
-                    'utoken' => $account_hash['utoken']
+                    'minisite_website_name' => 'minisite_website_name',
+                    'minisite_website' => 'minisite_website',
+                    'minisite_subdomain' => 'minisite_subdomain',
+                    'minisite_cname' => 'minisite_cname',
+                    'minisite_subdomain_active' => 'minisite_subdomain_active'
+                ), $account_hash),
+            'utoken' => $account_hash['utoken']
         );
 
         $app_key = $this->get_app_key($account_hash);
@@ -169,31 +170,36 @@ class Yotpo
     {
         $request = self::build_request(
             array(
-                    'utoken' => 'utoken',
-                    'email' => 'email',
-                    'customer_name' => 'customer_name',
-                    'order_date' => 'order_date',
-                    'currency_iso' => 'currency_iso',
-                    'order_id' => 'order_id',
-                    'platform' => 'platform',
-                    'products' => 'products'
-            ),
-            $purchase_hash
-        );
-                        $app_key = $this->get_app_key($purchase_hash);
-                        return $this->post("/apps/$app_key/purchases", $request);
+                'utoken' => 'utoken',
+                'email' => 'email',
+                'customer_name' => 'customer_name',
+                'order_date' => 'order_date',
+                'currency_iso' => 'currency_iso',
+                'order_id' => 'order_id',
+                'platform' => 'platform',
+                'products' => 'products'
+            ), $purchase_hash);
+        $app_key = $this->get_app_key($purchase_hash);
+        return $this->post("/apps/$app_key/purchases", $request);
     }
 
     public function create_purchases(array $purchases_hash)
     {
-        $request = self::build_request(array('utoken' => 'utoken', 'platform' => 'platform', 'orders' => 'orders'), $purchases_hash);
+        $request = self::build_request(array('utoken' => 'utoken', 'platform' => 'platform', 'orders' => 'orders'),
+            $purchases_hash);
         $app_key = $this->get_app_key($purchases_hash);
         return $this->post("/apps/$app_key/purchases/mass_create", $request);
     }
 
     public function get_purchases(array $request_hash)
     {
-        $request = self::build_request(array('utoken' => 'utoken', 'since_id' => 'since_id', 'since_date' => 'since_date', 'page' => 'page', 'count' => 'count'), $request_hash);
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+            'since_id' => 'since_id',
+            'since_date' => 'since_date',
+            'page' => 'page',
+            'count' => 'count'
+        ), $request_hash);
         if (!array_key_exists('page', $request)) {
             $request['page'] = 1;
         }
@@ -213,7 +219,11 @@ class Yotpo
 
     public function get_all_bottom_lines(array $request_hash)
     {
-        $request = self::build_request(array('utoken' => 'utoken', 'since_date' => 'since_date', 'since_id' => 'since_id'), $request_hash);
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+            'since_date' => 'since_date',
+            'since_id' => 'since_id'
+        ), $request_hash);
         $app_key = $this->get_app_key($request_hash);
         return $this->get("/apps/$app_key/bottom_lines", $request);
     }
@@ -313,14 +323,15 @@ class Yotpo
             if (is_array($value)) {
                 foreach ($value as $key2 => $value2) {
                     if (empty($value2)) {
-                        unset($array[ $key ][ $key2 ]);
+                        unset($array[$key][$key2]);
                     }
                 }
             }
-            if (empty($array[ $key ])) {
-                unset($array[ $key ]);
+            if (empty($array[$key])) {
+                unset($array[$key]);
             }
         }
         return $array;
     }
+
 }
