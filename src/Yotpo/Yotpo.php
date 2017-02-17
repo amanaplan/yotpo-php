@@ -228,6 +228,86 @@ class Yotpo
         return $this->get("/apps/$app_key/bottom_lines", $request);
     }
 
+    public function create_product_group(array $product_group_hash)
+    {
+        $request = self::build_request(
+            array(
+                'utoken' => 'utoken',
+                'group_name' => 'group_name',
+            ), $product_group_hash);
+        $app_key = $this->get_app_key($product_group_hash);
+        return $this->post("/apps/$app_key/products_groups", $request);
+    }
+
+    public function get_product_group(array $request_hash)
+    {
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+        ), $request_hash);
+
+        $group_name = $request_hash['group_name'];
+
+        if (empty($group_name)) {
+            throw new Exception('group_name is mandatory for this request');
+        }
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->get("/apps/$app_key/product_groups/$group_name", $request);
+    }
+
+    public function get_product_groups(array $request_hash)
+    {
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+        ), $request_hash);
+        $app_key = $this->get_app_key($request_hash);
+        return $this->get("/apps/$app_key/product_groups", $request);
+    }
+
+    public function update_product_group(array $request_hash)
+    {
+        $params = array(
+            'utoken' => 'utoken',
+        );
+
+        if (!array_key_exists('product_ids_to_add', $request_hash)) {
+            $params['product_ids_to_add'] = 'product_ids_to_add';
+        }
+        if (!array_key_exists('product_ids_to_remove', $request_hash)) {
+            $params['product_ids_to_remove'] = 'product_ids_to_remove';
+        }
+        if (empty($request_hash['product_ids_to_add']) && empty($request_hash['product_ids_to_remove'])) {
+            throw new Exception('product_ids_to_add or product_ids_to_remove is required for this request');
+        }
+
+        $request = self::build_request($params, $request_hash);
+
+        $group_name = $request_hash['group_name'];
+
+        if (empty($group_name)) {
+            throw new Exception('group_name is mandatory for this request');
+        }
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->put("/apps/$app_key/product_groups/$group_name", $request);
+    }
+
+    public function delete_product_group(array $request_hash)
+    {
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+        ), $request_hash);
+
+        $group_name = $request_hash['group_name'];
+
+        if (empty($group_name)) {
+            throw new Exception('group_name is mandatory for this request');
+        }
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->delete("/apps/$app_key/product_groups/$group_name", $request);
+    }
+
     public function create_review(array $review_hash)
     {
         $params = array(
