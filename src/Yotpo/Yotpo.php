@@ -171,13 +171,15 @@ class Yotpo
         $request = self::build_request(
             array(
                 'utoken' => 'utoken',
+                'platform' => 'platform',
                 'email' => 'email',
                 'customer_name' => 'customer_name',
-                'order_date' => 'order_date',
-                'currency_iso' => 'currency_iso',
                 'order_id' => 'order_id',
-                'platform' => 'platform',
-                'products' => 'products'
+                'currency_iso' => 'currency_iso',
+                'user_reference' => 'user_reference',
+                'products' => 'products',
+                'validate_data' => 'validate_data',
+                'order_date' => 'order_date',
             ), $purchase_hash);
         $app_key = $this->get_app_key($purchase_hash);
         return $this->post("/apps/$app_key/purchases", $request);
@@ -185,7 +187,12 @@ class Yotpo
 
     public function create_purchases(array $purchases_hash)
     {
-        $request = self::build_request(array('utoken' => 'utoken', 'platform' => 'platform', 'orders' => 'orders'),
+        $request = self::build_request(
+            array(
+                'utoken' => 'utoken',
+                'platform' => 'platform',
+                'orders' => 'orders',
+                'validate_data' => 'validate_data'),
             $purchases_hash);
         $app_key = $this->get_app_key($purchases_hash);
         return $this->post("/apps/$app_key/purchases/mass_create", $request);
@@ -198,7 +205,7 @@ class Yotpo
             'since_id' => 'since_id',
             'since_date' => 'since_date',
             'page' => 'page',
-            'count' => 'count'
+            'count' => 'count',
         ), $request_hash);
         if (!array_key_exists('page', $request)) {
             $request['page'] = 1;
@@ -208,6 +215,21 @@ class Yotpo
         }
         $app_key = $this->get_app_key($request_hash);
         return $this->get("/apps/$app_key/purchases", $request);
+    }
+
+    public function delete_purchases(array $request_hash)
+    {
+        $request = self::build_request(array(
+            'utoken' => 'utoken',
+            'orders' => 'orders',
+        ), $request_hash);
+
+        if (empty($group_name)) {
+            throw new Exception('group_name is mandatory for this request');
+        }
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->delete("/apps/$app_key/product_groups/$group_name", $request);
     }
 
     public function send_test_reminder(array $reminder_hash)
@@ -226,6 +248,25 @@ class Yotpo
         ), $request_hash);
         $app_key = $this->get_app_key($request_hash);
         return $this->get("/apps/$app_key/bottom_lines", $request);
+    }
+
+    public function create_products(array $products_hash)
+    {
+        $request = self::build_request(
+            array('utoken' => 'utoken', 'products' => 'products'),
+            $products_hash);
+        $app_key = $this->get_app_key($products_hash);
+        return $this->post("/apps/$app_key/products/mass_create", $request);
+    }
+
+    public function update_products(array $products_hash)
+    {
+        $request = self::build_request(
+            array('utoken' => 'utoken', 'products' => 'products'),
+            $products_hash
+        );
+        $app_key = $this->get_app_key($products_hash);
+        return $this->put("/apps/$app_key/products/mass_update", $request);
     }
 
     public function create_product_group(array $product_group_hash)
@@ -323,11 +364,47 @@ class Yotpo
             'review_content' => 'review_body',
             'review_title' => 'review_title',
             'review_score' => 'review_score',
-            'utoken' => 'utoken'
+            'reviewer_type' => 'reviewer_type',
+            'utoken' => 'utoken',
         );
         $request = self::build_request($params, $review_hash);
 
         return $this->get('/reviews/dynamic_create', $request);
+    }
+
+    public function create_review_async(array $review_hash)
+    {
+        return $this->create_review($review_hash);
+    }
+
+
+    public function create_review_sync(array $review_hash)
+    {
+        $params = array(
+            'app_key' => 'appkey',
+            'product_id' => 'sku',
+            'domain' => 'shop_domain',
+            'product_title' => 'product_title',
+            'product_description' => 'product_description',
+            'product_url' => 'product_url',
+            'product_image_url' => 'product_image_url',
+            'display_name' => 'user_display_name',
+            'email' => 'user_email',
+            'review_content' => 'review_body',
+            'review_title' => 'review_title',
+            'review_score' => 'review_score',
+            'reviewer_type' => 'reviewer_type',
+            'user_reference' => 'user_reference',
+            'utoken' => 'utoken',
+        );
+        $request = self::build_request($params, $review_hash);
+
+        return $this->get('/reviews/dynamic_create', $request);
+    }
+
+    public function get_review($review_id)
+    {
+        return $this->get("/reviews/$review_id");
     }
 
     public function get_product_reviews(array $request_hash)
@@ -343,10 +420,31 @@ class Yotpo
         $request_params = array(
             'page' => isset($request_hash['page']) ? $request_hash['page'] : null,
             'count' => isset($request_hash['count']) ? $request_hash['count'] : null,
-            'since_date' => isset($request_hash['since_date']) ? $request_hash['since_date'] : null
+            'since_id' => isset($request_hash['since_id']) ? $request_hash['since_id'] : null,
+            'since_date' => isset($request_hash['since_date']) ? $request_hash['since_date'] : null,
+            'since_updated_at' => isset($request_hash['since_updated_at']) ? $request_hash['since_updated_at'] : null,
+            'deleted' => isset($request_hash['deleted']) ? $request_hash['deleted'] : FALSE,
+            'user_reference' => isset($request_hash['user_reference']) ? $request_hash['user_reference'] : null,
         );
 
-        return $this->get("/products/$app_key/$product_id/reviews", $request_params);
+        return $this->get("/apps/$app_key/reviews", $request_params);
+    }
+
+    public function get_all_product_reviews(array $request_hash)
+    {
+        $app_key = $this->get_app_key($request_hash);
+
+        $request_params = array(
+            'page' => isset($request_hash['page']) ? $request_hash['page'] : null,
+            'count' => isset($request_hash['count']) ? $request_hash['count'] : null,
+            'since_id' => isset($request_hash['since_id']) ? $request_hash['since_id'] : null,
+            'since_date' => isset($request_hash['since_date']) ? $request_hash['since_date'] : null,
+            'since_updated_at' => isset($request_hash['since_updated_at']) ? $request_hash['since_updated_at'] : null,
+            'deleted' => isset($request_hash['deleted']) ? $request_hash['deleted'] : FALSE,
+            'user_reference' => isset($request_hash['user_reference']) ? $request_hash['user_reference'] : null,
+        );
+
+        return $this->get("/apps/$app_key/reviews", $request_params);
     }
 
     public function get_product_bottom_line(array $request_hash)
