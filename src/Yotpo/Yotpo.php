@@ -82,15 +82,21 @@ class Yotpo
         $user = array(
             'email' => $user_hash['email'],
             'display_name' => $user_hash['display_name'],
-            'first_name' => $user_hash['first_name'],
-            'last_name' => $user_hash['last_name'],
-            'website_name' => $user_hash['website_name'],
             'password' => $user_hash['password'],
-            'support_url' => $user_hash['support_url'],
-            'callback_url' => $user_hash['callback_url'],
-            'url' => $user_hash['url']
+            'url' => $user_hash['url'],
         );
         return $this->post('/users', array('user' => $user));
+    }
+
+    public function get_user(array $user_hash)
+    {
+        $user_id = $user_hash['user_id'];
+
+        if (empty($user_id)) {
+            throw new Exception('user_id is mandatory for this request');
+        }
+
+        return $this->get("/users/$user_id", array());
     }
 
     public function get_oauth_token(array $credentials_hash = array())
@@ -250,6 +256,33 @@ class Yotpo
         return $this->get("/apps/$app_key/bottom_lines", $request);
     }
 
+    public function get_product(array $request_hash)
+    {
+        $slug = $request_hash['slug'];
+
+        if (empty($slug)) {
+            throw new Exception('slug is mandatory for this request');
+        }
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->get("/apps/$app_key/products/$slug", array());
+    }
+
+    public function get_products(array $request_hash)
+    {
+        $request = self::build_request(array(
+            'page' => isset($request_hash['page']) ? $request_hash['page'] : null,
+            'count' => isset($request_hash['count']) ? $request_hash['count'] : null,
+            'since_id' => isset($request_hash['since_id']) ? $request_hash['since_id'] : null,
+            'since_date' => isset($request_hash['since_date']) ? $request_hash['since_date'] : null,
+            'since_updated_at' => isset($request_hash['since_updated_at']) ? $request_hash['since_updated_at'] : null,
+            'deleted' => isset($request_hash['deleted']) ? $request_hash['deleted'] : FALSE,
+        ), $request_hash);
+
+        $app_key = $this->get_app_key($request_hash);
+        return $this->get("/apps/$app_key/products", $request);
+    }
+
     public function create_products(array $products_hash)
     {
         $request = self::build_request(
@@ -277,7 +310,7 @@ class Yotpo
                 'group_name' => 'group_name',
             ), $product_group_hash);
         $app_key = $this->get_app_key($product_group_hash);
-        return $this->post("/apps/$app_key/products_groups", $request);
+        return $this->post("/v1/apps/$app_key/products_groups", $request);
     }
 
     public function get_product_group(array $request_hash)
@@ -293,7 +326,7 @@ class Yotpo
         }
 
         $app_key = $this->get_app_key($request_hash);
-        return $this->get("/apps/$app_key/product_groups/$group_name", $request);
+        return $this->get("/v1/apps/$app_key/products_groups/$group_name", $request);
     }
 
     public function get_product_groups(array $request_hash)
@@ -302,7 +335,7 @@ class Yotpo
             'utoken' => 'utoken',
         ), $request_hash);
         $app_key = $this->get_app_key($request_hash);
-        return $this->get("/apps/$app_key/product_groups", $request);
+        return $this->get("/v1/apps/$app_key/products_groups", $request);
     }
 
     public function update_product_group(array $request_hash)
@@ -330,7 +363,7 @@ class Yotpo
         }
 
         $app_key = $this->get_app_key($request_hash);
-        return $this->put("/apps/$app_key/product_groups/$group_name", $request);
+        return $this->put("/v1/apps/$app_key/products_groups/$group_name", $request);
     }
 
     public function delete_product_group(array $request_hash)
@@ -346,7 +379,7 @@ class Yotpo
         }
 
         $app_key = $this->get_app_key($request_hash);
-        return $this->delete("/apps/$app_key/product_groups/$group_name", $request);
+        return $this->delete("/v1/apps/$app_key/products_groups/$group_name", $request);
     }
 
     public function create_review(array $review_hash)
@@ -435,6 +468,7 @@ class Yotpo
         $app_key = $this->get_app_key($request_hash);
 
         $request_params = array(
+            'utoken' => 'utoken',
             'page' => isset($request_hash['page']) ? $request_hash['page'] : null,
             'count' => isset($request_hash['count']) ? $request_hash['count'] : null,
             'since_id' => isset($request_hash['since_id']) ? $request_hash['since_id'] : null,
@@ -444,7 +478,9 @@ class Yotpo
             'user_reference' => isset($request_hash['user_reference']) ? $request_hash['user_reference'] : null,
         );
 
-        return $this->get("/apps/$app_key/reviews", $request_params);
+        $request = self::build_request($request_params, $request_hash);
+
+        return $this->get("/apps/$app_key/reviews", $request);
     }
 
     public function get_product_bottom_line(array $request_hash)
