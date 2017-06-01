@@ -42,15 +42,19 @@ class YotpoTest extends \PHPUnit_Framework_TestCase
 
     public function testCreateUser()
     {
-        $user = $this->yotpo->create_user(array('email' => 'moshe1@ynet.co.il',
+        $user = $this->yotpo->create_user(array(
+            'email' => 'moshe1@ynet.co.il',
             'display_name' => 'Moshe The PHP Tester',
-            'first_name' => 'Moshe',
-            'last_name' => 'PHP Tester',
-            'website_name' => 'http://www.ynet1.co.il',
             'password' => 'vladopen',
-            'support_url' => 'http://www.ynet1.co.il/support',
-            'callback_url'=> 'http://www.ynet1.co.il/callback',
-            'url' => 'http://www.ynet1.co.il/url'));
+            'url' => 'http://www.ynet1.co.il/url'
+        ));
+        $this->assertObjectHasAttribute('code', $user->status);
+        $this->assertEquals(200, $user->status->code, 'Code was not 200');
+    }
+
+    public function testGetUser()
+    {
+        $user = $this->yotpo->get_user(array('user_id' => 11));
         $this->assertObjectHasAttribute('code', $user->status);
         $this->assertEquals(200, $user->status->code, 'Code was not 200');
     }
@@ -115,16 +119,16 @@ class YotpoTest extends \PHPUnit_Framework_TestCase
             'platform' => 'general',
             'products' => array(
                 'p1' => array(
-                  'url' => 'http://example_product_url1.com',
-                  'name' => 'product1',
-                  'image' => 'http://example_product_image_url1.com',
-                  'description' => 'this is the description of a product'
+                    'url' => 'http://example_product_url1.com',
+                    'name' => 'product1',
+                    'image' => 'http://example_product_image_url1.com',
+                    'description' => 'this is the description of a product'
                 )
             )
         );
         $response = $this->yotpo->create_purchase($purchase_hash);
-        $this->assertObjectHasAttribute('code', $response->status);
-        $this->assertEquals(200, $response->status->code, 'Code was not 200');
+        $this->assertObjectHasAttribute('code', $response);
+        $this->assertEquals(200, $response->code, 'Code was not 200');
     }
 
     public function testCreatePurchases()
@@ -140,31 +144,76 @@ class YotpoTest extends \PHPUnit_Framework_TestCase
                 'order_id' => '1233123',
                 'products' => array(
                     'p1' => array(
-                      'url' => 'http://example_product_url1.com',
-                      'name' => 'product1',
-                      'image' => 'http://example_product_image_url1.com',
-                      'description' => 'this is the description of a product'
+                        'url' => 'http://example_product_url1.com',
+                        'name' => 'product1',
+                        'image' => 'http://example_product_image_url1.com',
+                        'description' => 'this is the description of a product'
                     )
                 )
             )
         );
         $response = $this->yotpo->create_purchases($purchases_hash);
+        $this->assertObjectHasAttribute('code', $response);
+        $this->assertEquals(200, $response->code, 'Code was not 200');
+    }
+
+    public function testGetAllProductReviews()
+    {
+        $request_hash = array(
+            'utoken' => $this->utoken,
+        );
+        $response = $this->yotpo->get_all_product_reviews($request_hash);
+        $this->assertObjectHasAttribute('code', $response->status);
+        $this->assertEquals(200, $response->status->code, 'Code was not 200');
+    }
+
+    public function testGetProductGroups()
+    {
+        $request_hash = array(
+            'utoken' => $this->utoken,
+        );
+        $response = $this->yotpo->get_product_groups($request_hash);
         $this->assertObjectHasAttribute('code', $response->status);
         $this->assertEquals(200, $response->status->code, 'Code was not 200');
     }
 
     public function testGetPurchases()
     {
-        $this->markTestIncomplete(
-            'This test has not been implemented yet.'
+        $request_hash = array(
+            'utoken' => $this->utoken,
         );
+        $response = $this->yotpo->get_purchases($request_hash);
+        $this->assertObjectHasAttribute('code', $response->status);
+        $this->assertEquals(200, $response->status->code, 'Code was not 200');
+    }
+
+    public function testGetProduct()
+    {
+        $request_hash = array(
+            'slug' => 'product1--1733',
+        );
+        $response = $this->yotpo->get_products($request_hash);
+        $this->assertObjectHasAttribute('code', $response->status);
+        $this->assertEquals(200, $response->status->code, 'Code was not 200');
+    }
+
+    public function testGetProducts()
+    {
+        $request_hash = array();
+        $response = $this->yotpo->get_products($request_hash);
+        $this->assertObjectHasAttribute('code', $response->status);
+        $this->assertEquals(200, $response->status->code, 'Code was not 200');
     }
 
     public function testSendTestReminder()
     {
-        $this->markTestIncomplete(
-            'This test has not been implemented yet.'
+        $request_hash = array(
+            'utoken' => $this->utoken,
+            'email' => 'yotpo-php-test@maildrop.cc',
         );
+        $response = $this->yotpo->send_test_reminder($request_hash);
+        $this->assertObjectHasAttribute('code', $response->status);
+        $this->assertEquals(200, $response->status->code, 'Code was not 200');
     }
 
     public function testGetAllBottomLines()
