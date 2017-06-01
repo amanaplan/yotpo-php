@@ -14,7 +14,7 @@ use Httpful\Response;
 class Yotpo
 {
 
-    const VERSION = '0.0.3';
+    const VERSION = '1.0.4';
 
     protected static $app_key, $secret, $base_uri = 'https://api.yotpo.com';
 
